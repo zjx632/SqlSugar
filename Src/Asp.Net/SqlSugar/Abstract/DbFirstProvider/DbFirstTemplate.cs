@@ -21,12 +21,12 @@ namespace SqlSugar
                                                  ClassSpace + "}\r\n" +
                                                 "}\r\n";
         public static string ClassDescriptionTemplate =
-                                                ClassSpace + "///<summary>\r\n" +
-                                                ClassSpace + "///{ClassDescription}" +
-                                                ClassSpace + "///</summary>";
+                                                ClassSpace + "/// <summary>\r\n" +
+                                                ClassSpace + "/// {ClassDescription}\r\n" +
+                                                ClassSpace + "/// </summary>";
 
         public static string PropertyTemplate = PropertySpace + "{SugarColumn}\r\n" +
-                                                PropertySpace + "public {PropertyType} {PropertyName} {get;set;}\r\n";
+                                                PropertySpace + "public {PropertyType} {PropertyName} { get; set; }\r\n";
 
         public static string PropertyDescriptionTemplate =
                                                 PropertySpace + "/// <summary>\r\n" +
@@ -63,7 +63,7 @@ namespace SqlSugar
         #endregion
 
         #region Space
-        public const string PropertySpace = "           ";
+        public const string PropertySpace = "        ";
         public const string ClassSpace = "    "; 
         #endregion
     }

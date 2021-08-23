@@ -239,7 +239,7 @@ namespace SqlSugar
             classText = classText.Replace(DbFirstTemplate.KeyClassName, className);
             classText = classText.Replace(DbFirstTemplate.KeyNamespace, this.Namespace);
             classText = classText.Replace(DbFirstTemplate.KeyUsing, IsAttribute ? (this.UsingTemplate + "using " + UtilConstants.AssemblyName + ";\r\n") : this.UsingTemplate);
-            classText = classText.Replace(DbFirstTemplate.KeyClassDescription, this.ClassDescriptionTemplate.Replace(DbFirstTemplate.KeyClassDescription, tableInfo.Description + "\r\n"));
+            classText = classText.Replace(DbFirstTemplate.KeyClassDescription, this.ClassDescriptionTemplate.Replace(DbFirstTemplate.KeyClassDescription, tableInfo.Description ?? className));
             classText = classText.Replace(DbFirstTemplate.KeySugarTable, IsAttribute ? string.Format(DbFirstTemplate.ValueSugarTable, tableInfo.Name) : null);
             if (columns.HasValue())
             {
@@ -356,7 +356,7 @@ namespace SqlSugar
             string SugarColumnText = DbFirstTemplate.ValueSugarCoulmn;
             var propertyName = GetPropertyName(item);
             var isMappingColumn = propertyName != item.DbColumnName;
-            var hasSugarColumn = item.IsPrimarykey == true || item.IsIdentity == true || isMappingColumn;
+            var hasSugarColumn = true;// item.IsPrimarykey == true || item.IsIdentity == true || isMappingColumn;
             if (hasSugarColumn && this.IsAttribute)
             {
                 List<string> joinList = new List<string>();
@@ -368,10 +368,9 @@ namespace SqlSugar
                 {
                     joinList.Add("IsIdentity=true");
                 }
-                if (isMappingColumn)
-                {
-                    joinList.Add("ColumnName=\"" + item.DbColumnName + "\"");
-                }
+
+                joinList.Add("ColumnName=\"" + item.DbColumnName + "\"");
+
                 SugarColumnText = string.Format(SugarColumnText, string.Join(",", joinList));
             }
             else
@@ -386,7 +385,8 @@ namespace SqlSugar
         }
         private string GetEnityName(DbColumnInfo item)
         {
-            var mappingInfo = this.Context.MappingTables.FirstOrDefault(it => it.DbTableName.Equals(item.TableName, StringComparison.CurrentCultureIgnoreCase));
+            string tableName = item.TableName.Replace("`", "");
+            var mappingInfo = this.Context.MappingTables.FirstOrDefault(it => it.DbTableName.Equals(tableName, StringComparison.CurrentCultureIgnoreCase));
             return mappingInfo == null ? item.TableName : mappingInfo.EntityName;
         }
         private string GetPropertyName(DbColumnInfo item)
@@ -434,7 +434,7 @@ namespace SqlSugar
         }
         private string GetPropertyDescriptionText(DbColumnInfo item, string propertyDescriptionText)
         {
-            propertyDescriptionText = propertyDescriptionText.Replace(DbFirstTemplate.KeyPropertyDescription, GetColumnDescription(item.ColumnDescription));
+            propertyDescriptionText = propertyDescriptionText.Replace(DbFirstTemplate.KeyPropertyDescription, GetColumnDescription(item.ColumnDescription) ?? GetPropertyName(item));
             propertyDescriptionText = propertyDescriptionText.Replace(DbFirstTemplate.KeyDefaultValue, GetProertypeDefaultValue(item));
             propertyDescriptionText = propertyDescriptionText.Replace(DbFirstTemplate.KeyIsNullable, item.IsNullable.ObjToString());
             return propertyDescriptionText;
