@@ -32,8 +32,8 @@ namespace OrmTest
 
             var insertObj = new Order() { Id = 1, Name = "order1", Price = 0 };
             var insertObjs = new List<Order> {
-                 new Order() { Id = 11, Name = "order11", Price=0 },
-                 new Order() { Id = 12, Name = "order12" , Price=0}
+                 new Order() { Id = 11, Name = "XX", Price=0 },
+                 new Order() { Id = 12, Name = "XX2" , Price=0}
             };
 
             var x=db.Insertable(insertObjs).RemoveDataCache().IgnoreColumns(it=>it.CreateTime).UseParameter().ExecuteCommand();
@@ -56,10 +56,10 @@ namespace OrmTest
                  new Order() { Id = 11, Name = "order11", Price=1 },
                  new Order() { Id = 12, Name = "order12" , Price=20, CreateTime=DateTime.Now, CustomId=1}
             };
-            db.Insertable(insertObjs).UseSqlServer().ExecuteBlukCopy();
+            db.Insertable(insertObjs).UseSqlServer().ExecuteBulkCopy();
             var dt = db.Queryable<Order>().Take(5).ToDataTable();
             dt.TableName = "Order";
-            db.Insertable(dt).UseSqlServer().ExecuteBlukCopy();
+            db.Insertable(dt).UseSqlServer().ExecuteBulkCopy();
             db.CodeFirst.InitTables<RootTable0, TwoItem, TwoItem2, TwoItem3>();
             db.CodeFirst.InitTables<ThreeItem2>();
             db.DbMaintenance.TruncateTable("RootTable0");
@@ -149,6 +149,21 @@ namespace OrmTest
 
             SubNoIdentity(db);
             SubIdentity(db);
+
+
+            var dict = new Dictionary<string, object>();
+            dict.Add("name", "1");
+            dict.Add("CreateTime", DateTime.Now);
+            dict.Add("Price", 1);
+            db.Insertable(dict).AS("[Order]").ExecuteCommand();
+
+            db.Insertable(new List<Order>()).UseParameter().ExecuteCommand();
+
+            db.Fastest<Order>().BulkCopy(insertObjs);
+
+
+            var dataTable= db.Queryable<Order>().Select("id,name,Price").Take(2).ToDataTable();
+            int result= db.Fastest<Order>().BulkCopy("order", dataTable);
             Console.WriteLine("#### Insertable End ####");
 
         }

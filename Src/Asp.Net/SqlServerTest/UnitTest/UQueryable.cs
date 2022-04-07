@@ -147,6 +147,12 @@ namespace OrmTest
                 name="a"
             }).ToList();
 
+            var bytes2 = db.Queryable<UnitBytes11>().Select(it => new
+            {
+                b = it 
+            }).ToList();
+
+
             db.CodeFirst.InitTables<BoolTest1>();
             db.CodeFirst.InitTables<BoolTest2>();
             db.Queryable<BoolTest1>().Where(it => !it.a).ToList();
@@ -160,10 +166,113 @@ namespace OrmTest
             {
                 throw new Exception("unit query error");
             }
+
+            db.Queryable<Order>().Where(it => SqlFunc.Round(it.Id, 2) == SqlFunc.Abs(it.Id)).ToList();
+            db.Insertable(new Order() { CreateTime = Convert.ToDateTime("2021-1-1"), CustomId = 1, Name = "a", Price = 0 }).ExecuteCommand();
+            db.Insertable(new Order() { CreateTime = Convert.ToDateTime("2021-1-9"), CustomId = 1, Name = "a", Price = 0 }).ExecuteCommand();
+            db.Insertable(new Order() { CreateTime = Convert.ToDateTime("2021-9-11"), CustomId = 1, Name = "a", Price = 0 }).ExecuteCommand();
+            db.Insertable(new Order() { CreateTime = Convert.ToDateTime("2021-11-30"), CustomId = 1, Name = "a", Price = 0 }).ExecuteCommand();
+            var d1 = db.Queryable<Order>()
+                            .Where(it=>it.CreateTime.Day==1&&it.CreateTime.Year==2021)
+                            .Select(it => it.CreateTime.ToString("yyyy-MM-dd")).ToList();
+            Check.Exception(d1.Last() != "2021-01-01", "unit error");
+            var d11 = db.Queryable<Order>()
+                .Where(it => it.CreateTime.Day == 9 && it.CreateTime.Year == 2021)
+                .Select(it => it.CreateTime.ToString("yyyy-MM-dd")).ToList();
+            Check.Exception(d11.Last() != "2021-01-09", "unit error");
+            var d111 = db.Queryable<Order>()
+                .Where(it => it.CreateTime.Day == 11 && it.CreateTime.Year == 2021)
+                .Select(it => it.CreateTime.ToString("yyyy-MM-dd")).ToList();
+            Check.Exception(d111.Last() != "2021-09-11", "unit error");
+            var d1111 = db.Queryable<Order>()
+                .Where(it => it.CreateTime.Day == 30 && it.CreateTime.Year == 2021)
+                .Select(it => it.CreateTime.ToString("yyyy-MM-dd")).ToList();
+            Check.Exception(d1111.Last() != "2021-11-30", "unit error");
+
+
+            var d11111 = db.Queryable<Order>()
+               .Where(it => it.CreateTime.ToString("yyyy-MM-dd") == "2021-11-30")
+               .Select(it => it.CreateTime.ToString("yyyy-MM-dd")).ToList();
+
+            Check.Exception(d11111.Last() != "2021-11-30", "unit error");
+
+            db.CodeFirst.InitTables<UnitEnumadfa>();
+            db.Insertable(new UnitEnumadfa()).ExecuteCommand();
+            db.Insertable(new UnitEnumadfa() {  Type=DbType.Sqlite}).ExecuteCommand();
+            var listEnum=db.Queryable<UnitEnumadfa>().ToList();
+
+            var d111111 = db.Queryable<Order>()
+            .Where(it => it.Id== SqlFunc.IF(true).Return(1).End(0) )
+            .ToList();
+                        var d1111111 = db.Queryable<Order>()
+            .Where(it => it.Id == SqlFunc.IF(it.Id>0).Return(1).End(0))
+            .ToList();
+                        var d11111111 = db.Queryable<Order>()
+            .Where(it => it.Id == (it.Id>0? (it.Id==1?11:1):2))
+            .ToList();
+                        var d111111111 = db.Queryable<Order>()
+            .Where(it => it.Id == (it.Id > 0 ? (it.Id == 1 ? 11 : (it.Id==2?2:1)) : 2))
+            .ToList();
+            bool? bq = true;
+            var d1111111111 = db.Queryable<BoolTest1>().Where(it => it.a.Equals(bq.Value)).ToArray();
+            var d11111111111 = db.Queryable<BoolTest1>().Where(it => SqlFunc.IIF(bq.Value,1,2)==1).ToArray();
+            var d111111111111 = db.Queryable<BoolTest1>().Select(it =>new { x = SqlFunc.IsNull(it.a,false) }).ToArray();
+
+            db.CodeFirst.InitTables<SqlSugarDemo.UserEntity, SqlSugarDemo.RoleEntity, SqlSugarDemo.UserRoleEntity>();
+            var data = new SqlSugarDemo.UserEntity()
+            {
+                CardNo = "",
+                CompanyWX = "",
+                Credential = "",
+                EmailAccount = "",
+                EndDate = DateTime.Now,
+                FailedLoginPwdCount = 1,
+                IsChangePassword = true,
+                IsReal = 1,
+                LastLoginDate = DateTime.Now,
+                ManageAccount = Guid.NewGuid(),
+                ManageOrg = Guid.NewGuid(),
+                NickName = "",
+                PhoneAccount = "",
+                RealName = "",
+                VerificationLoginPwdDate = DateTime.Now,
+                SafePhone = "",
+                Sex = 1,
+                StartDate = DateTime.Now,
+                StopLoginTime = DateTime.Now,
+                UserAccount = "",
+                UserId = Guid.NewGuid(),
+                UserType = 1
+            };
+            db.Insertable(data).ExecuteCommand();
+            //var role = new SqlSugarDemo.RoleEntity()
+            //{
+            //     RoleId=Guid.NewGuid(),
+            //       ManageAccount= Guid.NewGuid(),
+            //      ManageOrg=Guid.NewGuid(),
+            //       OrganizationId=Guid.NewGuid(),
+            //        UnitPrice=1,
+            //         Quantity=1,
+            //          RoleName="",
+            //           RoleType=1,
+            //            SortNum=1
+            //};
+            //db.Insertable(role).ExecuteCommand();
+            //db.Insertable(new SqlSugarDemo.UserRoleEntity()
+            //{
+            //     RoleId= role.RoleId,
+            //     UserId=data.UserId
+            //}).ExecuteCommand();
+            var d1111111111111 = db.Queryable<SqlSugarDemo.UserEntity>()
+              .Mapper<SqlSugarDemo.UserEntity, SqlSugarDemo.RoleEntity, SqlSugarDemo.UserRoleEntity>(it => ManyToMany.Config(it.UserId, it.RoleId)).InSingle(data.UserId);
         }
 
 
-        
+        public class UnitEnumadfa 
+        {
+            [SugarColumn(IsNullable =true)]
+            public DbType? Type { get; set; }
+        }
         public class UnitBytes11
         { 
             [SugarColumn(Length =200,IsNullable =true)]

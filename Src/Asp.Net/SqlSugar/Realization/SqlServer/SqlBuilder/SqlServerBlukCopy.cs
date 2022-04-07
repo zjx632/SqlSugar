@@ -16,7 +16,7 @@ namespace SqlSugar
         internal InsertBuilder InsertBuilder { get; set; }
         internal object[] Inserts { get;  set; }
 
-        public int ExecuteBlukCopy()
+        public int ExecuteBulkCopy()
         {
             if (DbColumnInfoList == null || DbColumnInfoList.Count == 0) return 0;
 
@@ -40,7 +40,7 @@ namespace SqlSugar
             return DbColumnInfoList.Count;
         }
 
-        public async Task<int> ExecuteBlukCopyAsync()
+        public async Task<int> ExecuteBulkCopyAsync()
         {
             if (DbColumnInfoList == null || DbColumnInfoList.Count == 0) return 0;
 
@@ -115,6 +115,7 @@ namespace SqlSugar
             {
                 this.Context.Ado.Connection.Open();
             }
+            copy.BulkCopyTimeout = this.Context.Ado.CommandTimeOut;
             return copy;
         }
         private DataTable GetCopyData()
@@ -123,28 +124,20 @@ namespace SqlSugar
             foreach (var rowInfos in DbColumnInfoList)
             {
                 var dr = dt.NewRow();
-                foreach (DataColumn item in dt.Columns)
+                foreach (var value in rowInfos)
                 {
-                    var rows = rowInfos.ToList();
-                    var value = rows.FirstOrDefault(it =>
-                                                             it.DbColumnName.Equals(item.ColumnName, StringComparison.CurrentCultureIgnoreCase) ||
-                                                             it.PropertyName.Equals(item.ColumnName, StringComparison.CurrentCultureIgnoreCase)
-                                                        );
-                    if (value != null)
+                    if (value.Value != null && UtilMethods.GetUnderType(value.Value.GetType()) == UtilConstants.DateType)
                     {
-                        if (value.Value != null && UtilMethods.GetUnderType(value.Value.GetType()) == UtilConstants.DateType)
+                        if (value.Value != null && value.Value.ToString() == DateTime.MinValue.ToString())
                         {
-                            if (value.Value != null && value.Value.ToString() == DateTime.MinValue.ToString())
-                            {
-                                value.Value = Convert.ToDateTime("1753/01/01");
-                            }
+                            value.Value = Convert.ToDateTime("1753/01/01");
                         }
-                        if (value.Value == null)
-                        {
-                            value.Value = DBNull.Value;
-                        }
-                        dr[item.ColumnName] = value.Value;
                     }
+                    if (value.Value == null)
+                    {
+                        value.Value = DBNull.Value;
+                    }
+                    dr[value.DbColumnName] = value.Value;
                 }
                 dt.Rows.Add(dr);
             }

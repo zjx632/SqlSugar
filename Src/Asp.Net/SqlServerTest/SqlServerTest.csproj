@@ -81,6 +81,8 @@
     <Compile Include="Demo\DemoH_Tenant.cs" />
     <Compile Include="Demo\DemoJ_Report.cs" />
     <Compile Include="Demo\DemoL_Snowflake.cs" />
+    <Compile Include="Demo\DemoM_UnitOfWork.cs" />
+    <Compile Include="Demo\DemoN_SplitTable.cs" />
     <Compile Include="Models\DataDictionary.cs" />
     <Compile Include="Models\Custom.cs" />
     <Compile Include="Models\EntityMapper.cs" />
@@ -92,7 +94,30 @@
     <Compile Include="Models\OrderItem.cs" />
     <Compile Include="Demo\Demo0_SqlSugarClient.cs" />
     <Compile Include="Models\ViewOrder.cs" />
+    <Compile Include="UnitTest\Models\Order.cs" />
+    <Compile Include="UnitTest\Models\RoleEntity.cs" />
+    <Compile Include="UnitTest\Models\TestModel.cs" />
+    <Compile Include="UnitTest\Models\UserEntity.cs" />
+    <Compile Include="UnitTest\Models\UserRoleEntity.cs" />
+    <Compile Include="UnitTest\UCustom01.cs" />
+    <Compile Include="UnitTest\UCustom09.cs" />
+    <Compile Include="UnitTest\UCustom011.cs" />
+    <Compile Include="UnitTest\UCustom02.cs" />
+    <Compile Include="UnitTest\UCustom03.cs" />
+    <Compile Include="UnitTest\UCustom010.cs" />
+    <Compile Include="UnitTest\UCustom08.cs" />
+    <Compile Include="UnitTest\UCustom07.cs" />
+    <Compile Include="UnitTest\UCustom06.cs" />
+    <Compile Include="UnitTest\UCustom05.cs" />
+    <Compile Include="UnitTest\UCustom04.cs" />
+    <Compile Include="UnitTest\UDelete.cs" />
+    <Compile Include="UnitTest\UFastest.cs" />
+    <Compile Include="UnitTest\UConfig.cs" />
+    <Compile Include="UnitTest\USplit.cs" />
+    <Compile Include="UnitTest\Models\TB_AdminUser.cs" />
+    <Compile Include="UnitTest\Models\TB_ClientConfig.cs" />
     <Compile Include="UnitTest\UAopTest.cs" />
+    <Compile Include="UnitTest\USubquery.cs" />
     <Compile Include="UnitTest\UTest01.cs" />
     <Compile Include="UnitTest\UEnum.cs" />
     <Compile Include="UnitTest\UFilter.cs" />
@@ -131,9 +156,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UnitTest\models\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.6">
       <Visible>False</Visible>

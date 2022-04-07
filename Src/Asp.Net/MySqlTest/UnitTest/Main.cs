@@ -31,6 +31,10 @@ namespace OrmTest
         }
         public static void Init()
         {
+            UCustom011.Init();
+            UnitCustom01.Init();
+            UCustom06.Init();
+            Bulk();
             Insert();
             Queue();
             CodeFirst();

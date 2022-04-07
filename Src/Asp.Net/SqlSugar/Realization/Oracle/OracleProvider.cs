@@ -17,7 +17,7 @@ namespace SqlSugar
             {
                 sql = sql.Replace("+@", "+:");
                 if (sql.HasValue()&&sql.Contains("@")) {
-                    var exceptionalCaseInfo = Regex.Matches(sql, @"\'.*?\@.*?\'| [\.,\w]+\@[\.,\w]+ | [\.,\w]+\@[\.,\w]+");
+                    var exceptionalCaseInfo = Regex.Matches(sql, @"\'[^\=]*?\@.*?\'| [\.,\w]+\@[\.,\w]+ | [\.,\w]+\@[\.,\w]+|[\.,\w]+\@[\.,\w]+ ");
                     if (exceptionalCaseInfo != null) {
                         foreach (var item in exceptionalCaseInfo.Cast<Match>())
                         {
@@ -134,10 +134,26 @@ namespace SqlSugar
                 {
                     sqlParameter.OracleDbType = OracleDbType.RefCursor;
                 }
+                if (parameter.IsClob)
+                {
+                    sqlParameter.OracleDbType = OracleDbType.Clob;
+                    sqlParameter.Value = parameter.Value;
+                }
+                if (parameter.IsArray)
+                {
+                    sqlParameter.OracleDbType = OracleDbType.Varchar2;
+                    sqlParameter.CollectionType = OracleCollectionType.PLSQLAssociativeArray;
+                }
                 if (sqlParameter.DbType == System.Data.DbType.Guid)
                 {
                     sqlParameter.DbType = System.Data.DbType.String;
                     sqlParameter.Value = sqlParameter.Value.ObjToString();
+                }
+                else if (parameter.DbType == System.Data.DbType.DateTimeOffset)
+                {
+                    if (parameter.Value != DBNull.Value)
+                        sqlParameter.Value = UtilMethods.ConvertFromDateTimeOffset((DateTimeOffset)parameter.Value);
+                    sqlParameter.DbType = System.Data.DbType.DateTime;
                 }
                 else if (parameter.DbType == System.Data.DbType.Boolean)
                 {
@@ -154,7 +170,17 @@ namespace SqlSugar
                 else if (parameter.DbType == System.Data.DbType.DateTime)
                 {
                     sqlParameter.Value = parameter.Value;
-                    sqlParameter.DbType = System.Data.DbType.Date;
+                    sqlParameter.DbType = System.Data.DbType.DateTime;
+                }
+                else if (parameter.DbType == System.Data.DbType.AnsiStringFixedLength)
+                {
+                    sqlParameter.DbType = System.Data.DbType.AnsiStringFixedLength;
+                    sqlParameter.Value = parameter.Value;
+                }
+                else if (parameter.DbType == System.Data.DbType.AnsiString)
+                {
+                    sqlParameter.DbType = System.Data.DbType.AnsiString;
+                    sqlParameter.Value = parameter.Value;
                 }
                 else
                 {
@@ -167,7 +193,7 @@ namespace SqlSugar
                 if (parameter.Direction != 0)
                     sqlParameter.Direction = parameter.Direction;
                 result[index] = sqlParameter;
-                if (sqlParameter.Direction.IsIn(ParameterDirection.Output, ParameterDirection.InputOutput,ParameterDirection.ReturnValue))
+                if (sqlParameter.Direction.IsIn(ParameterDirection.Output, ParameterDirection.InputOutput, ParameterDirection.ReturnValue))
                 {
                     if (this.OutputParameters == null) this.OutputParameters = new List<IDataParameter>();
                     this.OutputParameters.RemoveAll(it => it.ParameterName == sqlParameter.ParameterName);

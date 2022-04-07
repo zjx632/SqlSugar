@@ -31,7 +31,22 @@ namespace OrmTest
         }
         public static void Init()
         {
-
+            UCustom09.Init();
+            UCustom011.Init();
+            UCustom010.Init();
+            UCustom08.Init();
+            UCustom07.Init();
+            UCustom01.Init();
+            UCustom02.Init();
+            UCustom03.Init();
+            UCustom04.Init();
+            UCustom05.Init();
+            UCustom06.Init();
+            SubQueryTest();
+            UConfig();
+            DeleteTest();
+            Fastest2();
+            SplitTest();
             Filter();
             Insert();
             Insert2();

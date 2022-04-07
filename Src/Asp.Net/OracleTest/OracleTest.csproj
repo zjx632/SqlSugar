@@ -65,6 +65,7 @@
     <Compile Include="Demo\DemoF_Utilities.cs" />
     <Compile Include="Demo\DemoG_SimpleClient.cs" />
     <Compile Include="Demo\DemoJ_Report.cs" />
+    <Compile Include="Demo\DemoN_SplitTable.cs" />
     <Compile Include="Models\AttributeTable.cs" />
     <Compile Include="Models\CarType.cs" />
     <Compile Include="Models\Custom.cs" />
@@ -82,6 +83,9 @@
     <Compile Include="UnitTest\Main.cs" />
     <Compile Include="UnitTest\UAdo.cs" />
     <Compile Include="UnitTest\UCodeFirst.cs" />
+    <Compile Include="UnitTest\UCustom01.cs" />
+    <Compile Include="UnitTest\UCustom011.cs" />
+    <Compile Include="UnitTest\UDelete.cs" />
     <Compile Include="UnitTest\UJson.cs" />
     <Compile Include="UnitTest\Updateable.cs" />
     <Compile Include="UnitTest\UQueryable.cs" />

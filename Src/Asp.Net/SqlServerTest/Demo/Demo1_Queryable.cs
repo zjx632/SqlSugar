@@ -153,6 +153,60 @@ namespace OrmTest
               JoinType.Left, o.Name == SqlFunc.ToString(SqlFunc.MergeString(",", i.Name, ","))
             ))
             .Select<ViewOrder>().ToList();
+            var test16 = db.Queryable<Order>().Select(it => SqlFunc.SqlServer_DateDiff("day", DateTime.Now.AddDays(-1), DateTime.Now)).ToList();
+            var test17 =  
+               db.Queryable<Order>()
+               .Select<Order>()
+               .MergeTable()
+              .Select(it => new ViewOrder()
+              {
+                  Name = SqlFunc.Subqueryable<Order>().Select(s => s.Name)
+              }).ToList(); ;
+            var test18 = db.UnionAll(
+               db.Queryable<Order>() ,
+               db.Queryable<Order>() 
+              ) 
+              .Select(it=>new ViewOrder(){ 
+                  Name=SqlFunc.Subqueryable<Order>().Select(s=>s.Name)
+               }).ToList();
+            var test19 = db.Queryable<Order>().Select<ViewOrder>().ToList();
+            var test20 = db.Queryable<Order>().LeftJoin<Custom>((o, cs) =>o.Id==cs.Id)
+                .ToDictionary(it => it.Id, it => it.Name);
+
+            var test21 = db.Queryable<Order>().Where(it=>it.Id.ToString()==1.ToString()).Select(it => it.CreateTime.ToString("24")).First();
+            var test22 = db.Queryable<Order>().Where(it => it.Id.ToString() == 1.ToString()).Select(it => SqlFunc.AggregateDistinctCount(it.CreateTime)).First();
+            var test23 = db.Queryable<Order>().Where(it =>true).Select(it => new { x1 = it.CreateTime.ToString("yyyy-MM") ,it.CreateTime}).ToList();
+            var test24 = db.Queryable<Order>().Where(it => true).Select(it => new { x1 = it.CreateTime.ToString("yyyy-MM-dd _ HH _ mm _ ss "), it.CreateTime }).ToList();
+            var test25 = db.Queryable<Order>().Where(it => true).Select(it => new { x1 = it.CreateTime.Month,x2=DateTime.Now.Month}).ToList();
+            var test26 = db.Queryable<Order>().Where(it => true).Select(it => new { x1 = it.CreateTime.Day, x2 = DateTime.Now.Day }).ToList();
+            var test27 = db.Queryable<Order>().Where(it => true).Select(it => new { x1 = it.CreateTime.Year, x2 = DateTime.Now.Year }).ToList();
+            var test28 = db.Queryable<Order>().Select(it=>SqlFunc.DateDiff(DateType.Day,Convert.ToDateTime("2021-1-1"),Convert.ToDateTime("2021-1-12"))).ToList();
+            var test29 = db.Queryable<Order>().Select(it =>new {x= SqlFunc.LessThan(1, 2) }).ToList();
+            var test30= db.Queryable<Order>().Select(it => new { x = SqlFunc.LessThanOrEqual(1, 2) }).ToList();
+            var test31 = db.Queryable<Order>().Select(it => new { x = SqlFunc.GreaterThan(1, 2) }).ToList();
+            var test32 = db.Queryable<Order>().Select(it => new { x = SqlFunc.GreaterThanOrEqual(1, 2) }).ToList();
+            List<Order> result = new List<Order>();
+            db.Queryable<Order>().ForEach(it =>
+            {
+                result.Add(it);
+
+            },10);
+            result = new List<Order>();
+            int count = 0;
+            db.Queryable<Order>().ForEachByPage(it =>
+            {
+                result.Add(it);
+
+            },2,10,ref count,5);
+            var test33= db.Queryable<Order>().ToList();
+            db.CurrentConnectionConfig.SqlMiddle = new SqlMiddle
+            {
+                 IsSqlMiddle=true,
+                 ExecuteCommand = (s, p)=>{ return s.Length; }
+                  
+            };
+            var five=db.Ado.ExecuteCommand("11111");
+            db.CurrentConnectionConfig.SqlMiddle = null;
             Console.WriteLine("#### Examples End ####");
         }
 
@@ -237,14 +291,34 @@ namespace OrmTest
 
             var list2 = db.Queryable<Order>().Where(it =>
             SqlFunc.Subqueryable<OrderItem>() 
-             .LeftJoin<OrderItem>((i,y)=>i.ItemId==y.ItemId)
-             .InnerJoin<OrderItem>((i,z) => i.ItemId == z.ItemId)
-             .Where(i=>i.ItemId==1)
-              .Any()
+             .LeftJoin<OrderItem>((i,z)=>i.ItemId==z.ItemId)
+             .InnerJoin<OrderItem>((i,z,y) => i.ItemId == z.ItemId)
+             .InnerJoin<OrderItem>((i,z,y,h) => i.ItemId == z.ItemId)
+             .InnerJoin<OrderItem>((i, z, y, h, n) => i.ItemId == z.ItemId)
+             .Where((i, z) => i.ItemId == z.ItemId)
+             .Any()
             ).ToList();
+ 
+            var list3 = db.Queryable<Order>().Select(it => new
+            {
+                customName = SqlFunc.Subqueryable<Custom>().Where(s=>s.Id==it.CustomId).GroupBy(s=>s.Name).Having(s=>SqlFunc.AggregateCount(s.Id)>0).Select(s => s.Name) 
+            }).ToList();
 
-            var list3=db.Queryable<Order>().Select(it => SqlFunc.SqlServer_DateDiff("day", DateTime.Now.AddDays(-1), DateTime.Now)).ToList();
 
+            var exp = Expressionable.Create<Custom>().And(s => s.Id==1).ToExpression();
+            var list4 = db.Queryable<Order>().Select(it => new
+            {
+                customName = SqlFunc.Subqueryable<Custom>().Where(exp).Where(exp).GroupBy(s => s.Name).Having(s => SqlFunc.AggregateCount(s.Id) > 0).Select(s => s.Name)
+            }).ToList();
+
+
+            var list5 = db.Queryable<Order>().Where(it =>
+        SqlFunc.Subqueryable<OrderItem>()
+         .LeftJoin<OrderItem>((i, y) => i.ItemId == y.ItemId)
+         .InnerJoin<OrderItem>((i, z) => i.ItemId == z.ItemId)
+         .Where(i => i.ItemId == 1)
+          .Any()
+        ).ToList();
             Console.WriteLine("#### Subquery End ####");
         }
 
@@ -389,6 +463,28 @@ namespace OrmTest
 
                             ).Select(o=>o).ToList();
 
+
+            var query5 = db.Queryable<Order>()
+                            .InnerJoin<Custom>((o, cus) => o.CustomId == cus.Id)
+                            .InnerJoin<OrderItem>((o, cus, oritem) => o.Id == oritem.OrderId)
+                            .Where((o) => o.Id == 1)
+                            .Select((o, cus) => new ViewOrder {  Id=o.Id, CustomName = cus.Name })
+                            .ToList();
+
+            var query6 = db.Queryable(db.Queryable<Order>()).LeftJoin<OrderItem>((m, i) => m.Id == i.OrderId)
+                .ToList();
+
+
+            var query7 = db.Queryable(db.Queryable<Order>().Select<Order>().MergeTable()).LeftJoin<OrderItem>((m, i) => m.Id == i.OrderId)
+                .ToList();
+
+
+            var query8 = db.Queryable<Order>()
+                .LeftJoin(db.Queryable<Custom>().Where(it=>it.Id==1),(o,i)=>o.CustomId==i.Id)
+                .LeftJoin(db.Queryable<OrderItem>().Where(it=>it.OrderId==2),(o,i,item)=>item.OrderId==o.Id)
+                .LeftJoin(db.Queryable<Order>().Where(it => it.Id >0), (o, i, item, od) => od.Id == o.Id)
+                .Select(o => o).ToList();
+    
             Console.WriteLine("#### Join Table End ####");
         }
 
@@ -435,8 +531,8 @@ namespace OrmTest
             conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.Equal, FieldValue = "1" });//id=1
             conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.Like, FieldValue = "1" });// id like '%1%'
             conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.IsNullOrEmpty });
-            conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.In, FieldValue = "1,2,3" });
-            conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.NotIn, FieldValue = "1,2,3" });
+            conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.In, FieldValue = "1,2,3",CSharpTypeName="int" });
+            conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.NotIn, FieldValue = "1,2,3" ,CSharpTypeName="int" });
             conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.NoEqual, FieldValue = "1,2,3" });
             conModels.Add(new ConditionalModel() { FieldName = "id", ConditionalType = ConditionalType.IsNot, FieldValue = null });// id is not null
 

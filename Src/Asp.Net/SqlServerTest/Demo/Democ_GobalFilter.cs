@@ -23,11 +23,15 @@ namespace OrmTest
         {
             var db = GetInstance();
             //Order add filter  
-            db.QueryFilter.Add(new TableFilterItem<Order>(it => it.Name.Contains("a")));
+            db.QueryFilter.Add(new TableFilterItem<Order>(it => it.Name.Contains("a"),true));
 
+            db.Queryable<Order>().ToList();
 
             db.Queryable<Order>().ToList();
             //SELECT [Id],[Name],[Price],[CreateTime],[CustomId] FROM [Order]  WHERE  ([Name] like '%'+@MethodConst0+'%') 
+
+            //delete Filter
+            db.Deleteable<Order>().EnableQueryFilter().Where(it=>it.Id==1).ExecuteCommand();
 
             db.Queryable<OrderItem, Order>((i, o) => i.OrderId == o.Id)
                 .Where(i => i.OrderId != 0)
@@ -37,6 +41,8 @@ namespace OrmTest
             //no filter
             db.Queryable<Order>().Filter(null, false).ToList();
             //SELECT [Id],[Name],[Price],[CreateTime],[CustomId] FROM [Order]
+
+            db.Queryable<OrderItem>().LeftJoin<Order>((x, y) => x.ItemId == y.Id).ToList();
         }
 
 
@@ -93,6 +99,8 @@ namespace OrmTest
             db.Aop.OnLogExecuted = (sql, p) =>
             {
                 Console.WriteLine(sql);
+                Console.WriteLine(string.Join(",",p.Select(it=>it.ParameterName+":"+it.Value)));
+                Console.WriteLine();
             };
             return db;
         }

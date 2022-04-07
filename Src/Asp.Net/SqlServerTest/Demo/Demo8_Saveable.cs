@@ -30,16 +30,41 @@ namespace OrmTest
                 }
             });
 
-
             //insert or update
-            db.Saveable<Order>(new Order() { Id=1, Name="jack" }).ExecuteReturnEntity();
-
-
+            var x1 = db.Storageable<Order>(new Order() { Id = 1, Name = "jack" }).ExecuteCommand();
+            var x11 = db.Storageable<Order>(new Order() { Id = 1, Name = "jack" }).ExecuteCommandAsync().GetAwaiter().GetResult();
+            
+            
             //insert or update
-            db.Saveable<Order>(new Order() { Id = 1000, Name = "jack", CreateTime=DateTime.Now })
-                  .InsertColumns(it => new { it.Name,it.CreateTime, it.Price})//if insert  into name,CreateTime,Price
-                  .UpdateColumns(it => new { it.Name, it.CreateTime })//if update set name CreateTime
-                  .ExecuteReturnEntity();
+            var x= db.Storageable<Order>(new Order() { Id=1, Name="jack" }).ToStorage();
+            x.AsUpdateable.ExecuteCommand();
+            x.AsInsertable.ExecuteCommand();
+
+
+            var x2 = db.Storageable<Order>(new Order() { Id = 0, Name = "jack" }).ToStorage();
+            x2.BulkCopy();
+            x2.BulkUpdate();
+
+            var dt = db.Queryable<Order>().Take(1).ToDataTable();
+            dt.TableName = "order";
+            var addRow = dt.NewRow();
+            addRow["id"] = 0;
+            addRow["price"] = 1;
+            addRow["Name"] = "a";
+            dt.Rows.Add(addRow);
+            var x3 = 
+                db.Storageable(dt)
+                .WhereColumns("id").ToStorage();
+
+            x3.AsInsertable.IgnoreColumns("id").ExecuteCommand();
+            x3.AsUpdateable.ExecuteCommand();
+
+
+            var x4 =
+               db.Storageable(dt)
+               .SplitDelete(it=>Convert.ToInt32( it["id"])>0)
+               .WhereColumns("id").ToStorage();
+            x4.AsDeleteable.ExecuteCommand();
 
             Console.WriteLine("");
             Console.WriteLine("#### Saveable End ####");

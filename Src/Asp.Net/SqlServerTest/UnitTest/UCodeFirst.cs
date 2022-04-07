@@ -24,6 +24,54 @@ namespace OrmTest
             Db.CodeFirst.InitTables<UnitCodeFirstpks3>();
             Db.CodeFirst.InitTables<UnitCodeFirstpks32>();
             db.CodeFirst.InitTables<UnitTest0122132>();
+            Db.CodeFirst.InitTables<UnitTimeSpan2>();
+            Db.Insertable(new UnitTimeSpan2()
+            {
+                Id = new TimeSpan(),
+                id2 = new TimeSpan(11, 2, 1)
+            }).ExecuteCommand();
+            var x = Db.Queryable<UnitTimeSpan2>().ToList();
+            Db.CodeFirst.InitTables<UnitDateOfTime2>();
+
+            Db.Insertable(new UnitDateOfTime2() { DateTimeOffset1 = DateTimeOffset.Now }).ExecuteCommand();
+            Db.Insertable(new List<UnitDateOfTime2> { new UnitDateOfTime2() { DateTimeOffset1 = DateTimeOffset.Now }, new UnitDateOfTime2() { DateTimeOffset1 = DateTimeOffset.Now } }).ExecuteCommand();
+            var list2 = Db.Queryable<UnitDateOfTime2>().ToList();
+
+            try
+            {
+                Db.Ado.ExecuteCommand(@" create schema abp");
+            }
+            catch  
+            { 
+            }
+            db.CodeFirst.InitTables<UnitTableName>();
+            db.CodeFirst.InitTables<UnitGe>();
+            db.Insertable(new UnitGe() { geometry1 = "POINT (20 180)" }).ExecuteCommand();
+            var gelist=db.Queryable<UnitGe>().Select(it=>new { geometry1 = it.geometry1.ToString()}).ToList();
+        }
+
+        public class UnitGe 
+        {
+            [SugarColumn(ColumnDataType = "geometry")]
+            public string geometry1 { get; set; }
+        }
+
+        [SugarTable("abp.UnitTableName","备注")]
+        public class UnitTableName 
+        {
+            public string Id { get; set; }
+        }
+
+        public class UnitDateOfTime2
+        {
+          
+            public DateTimeOffset DateTimeOffset1 { get; set; }
+        }
+        public class UnitTimeSpan2
+        {
+            [SqlSugar.SugarColumn(ColumnDataType = "time")]
+            public TimeSpan Id { get; set; }
+            public TimeSpan id2 { get; set; }
         }
         public class UnitTest0122132
         {

@@ -70,6 +70,7 @@ namespace OrmTest
             var db = GetInstance();
             var dbTime = db.GetDate();
             var getAll = db.Queryable<Order>().ToList();
+            var getAll2 = db.Queryable<Order>().Where(it=>it.CreateTime.Day>=DateTime.Now.Date.Day).ToList();
             var getOrderBy = db.Queryable<Order>().OrderBy(it => it.Name,OrderByType.Desc).ToList();
             var getOrderBy2 = db.Queryable<Order>().OrderBy(it => it.Id).OrderBy(it => it.Name, OrderByType.Desc).ToList();
             var getOrderBy3 = db.Queryable<Order>().OrderBy(it =>new { it.Name,it.Id}).ToList();
@@ -83,6 +84,12 @@ namespace OrmTest
             var getByFuns2 = db.Queryable<Order>().GroupBy(it => it.Name).Select(it => SqlFunc.AggregateDistinctCount(it.Price)).ToList();
             var dp = DateTime.Now;
             var test05 = db.Queryable<Order>().Where(it => it.CreateTime.Month == dp.Month).ToList();
+            var fromatList = db.Queryable<Order>().Select(it => it.CreateTime.ToString("%Y-%m")).ToList();
+            var test06 = db.Queryable<Order>().Where(it => it.CreateTime.Date.Day >= DateTime.Now.Date.Day).ToList();
+            var test07 = db.Queryable<Order>().Select(it => SqlFunc.DateDiff(DateType.Day, Convert.ToDateTime("2021-1-1"), Convert.ToDateTime("2021-1-12"))).ToList();
+            var q1 = db.Queryable<Order>().Take(1);
+            var q2 = db.Queryable<Order>().Take(2);
+            var test02 = db.Union(q1, q2).ToList();
             Console.WriteLine("#### Examples End ####");
         }
 

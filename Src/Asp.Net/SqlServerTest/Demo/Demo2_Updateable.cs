@@ -54,6 +54,8 @@ namespace OrmTest
             var result5 = db.Updateable(updateObj).WhereColumns(it => new { it.Id }).ExecuteCommand();//update single by id
             var result6 = db.Updateable(updateObjs).WhereColumns(it => new { it.Id }).ExecuteCommand();//update List<Class> by id
 
+            //Re set value
+            var result66 = db.Updateable(new List<Order> { updateObj }).ReSetValue(it => it.Id = 112).IgnoreColumns(it => new { it.CreateTime, it.Price }).ExecuteCommand();
 
 
 
@@ -106,6 +108,9 @@ namespace OrmTest
                .Where(a => SqlFunc.StartsWith(a.Name, levelCode))
                .AddQueue();
             db.SaveQueues();
+
+            var dataTable = db.Queryable<Order>().Select("id,name,1 as price").Take(2).ToDataTable();
+            db.Fastest<Order>().BulkUpdate("Order", dataTable,new string[] {"id" },new string[] {"name" });
             Console.WriteLine("#### Updateable End ####");
         }
 

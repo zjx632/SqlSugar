@@ -42,6 +42,16 @@ namespace OrmTest
             var getByWhere2 = db.Queryable<Order>().Where(it => it.Id == DateTime.Now.Year).ToList();
             var getByFuns = db.Queryable<Order>().Where(it => SqlFunc.IsNullOrEmpty(it.Name)).ToList();
             var getByFuns2 = db.Queryable<Order>().GroupBy(it => it.Name).Select(it => SqlFunc.AggregateDistinctCount(it.Price)).ToList();
+            var btime = Convert.ToDateTime("2021-1-1");
+            var etime = Convert.ToDateTime("2022-1-12");
+            var test01 = db.Queryable<Order>().Select(it =>  SqlFunc.DateDiff(DateType.Year,btime, etime)).ToList();
+            var test02 = db.Queryable<Order>().Select(it => SqlFunc.DateDiff(DateType.Day, btime, etime)).ToList();
+            var test03 = db.Queryable<Order>().Select(it => SqlFunc.DateDiff(DateType.Month, btime, etime)).ToList();
+            var test04 = db.Queryable<Order>().Select(it => SqlFunc.DateDiff(DateType.Second, DateTime.Now, DateTime.Now.AddMinutes(2))).ToList();
+            var q1 = db.Queryable<Order>().Take(1);
+            var q2 = db.Queryable<Order>().Take(2);
+            var test05 = db.UnionAll(q1, q2).ToList();
+            Console.WriteLine("#### Examples End ####");
             Console.WriteLine("#### Examples End ####");
         }
 
@@ -177,7 +187,8 @@ namespace OrmTest
 
             var  list4 = db.Queryable<ABMapping>()
               .Mapper(it => it.A, it => it.AId)
-              .Mapper(it => it.B, it => it.BId).ToList();
+              .Mapper(it => it.B, it => it.BId)
+              .Where(it => it.A.Id == 1).ToList();
 
             //Manual mode
             var result = db.Queryable<OrderInfo>().Take(10).Select<ViewOrder>().Mapper((itemModel, cache) =>

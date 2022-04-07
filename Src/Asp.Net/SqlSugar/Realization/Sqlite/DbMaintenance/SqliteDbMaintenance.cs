@@ -271,6 +271,10 @@ namespace SqlSugar
             {
                 path = Regex.Match(connString, @"\/.+\/").Value;
             }
+            if (path.IsNullOrEmpty())
+            {
+                path = Regex.Match(connString, @"[a-z,A-Z]\:\\").Value;
+            }
             if (!FileHelper.IsExistDirectory(path))
             {
                 FileHelper.CreateDirectory(path);
@@ -285,7 +289,7 @@ namespace SqlSugar
             cacheKey = GetCacheKey(cacheKey);
             if (!isCache)
             {
-                return GetColumnInfosByTableName(tableName);
+                return GetColumnsByTableName(tableName);
             }
             return this.Context.Utilities.GetReflectionInoCacheInstance().GetOrCreate(cacheKey,
             () =>
@@ -313,7 +317,7 @@ namespace SqlSugar
                 {
                     DbColumnInfo column = new DbColumnInfo()
                     {
-                        TableName = tableName,
+                        TableName =this.SqlBuilder.GetNoTranslationColumnName(tableName+""),
                         DataType = row["DataTypeName"].ToString().Trim(),
                         IsNullable = (bool)row["AllowDBNull"],
                         IsIdentity = (bool)row["IsAutoIncrement"],
