@@ -21,53 +21,21 @@ namespace @Model.Namespace
     ///<summary>
     ///
     ///</summary>
+    [SqlSugar.SugarTable(""@Model.DbTableName"")]
     public partial class @Model.ClassName
     {
-           public @(Model.ClassName)(){
+        public @(Model.ClassName)(){ }
 
-
-           }
- @foreach (var item in @Model.Columns)
-   {
-      if(item.IsPrimarykey&&item.IsIdentity){
-         @:/// <summary>
-         @:/// Desc:@item.ColumnDescription
-         @:/// Default:@item.DefaultValue
-         @:/// Nullable:@item.IsNullable
-         @:/// </summary>     
-         @:[SqlSugar.SugarColumn(IsPrimaryKey = true, IsIdentity = true)]      
-         @:public @item.DataType @item.DbColumnName {get;set;}
-         }
-        else if(item.IsPrimarykey)
-        {
-         @:/// <summary>
-         @:/// Desc:@item.ColumnDescription
-         @:/// Default:@item.DefaultValue
-         @:/// Nullable:@item.IsNullable
-         @:/// </summary>    
-         @:[SqlSugar.SugarColumn(IsPrimaryKey = true)]       
-         @:public @item.DataType @item.DbColumnName {get;set;}
-         } 
-        else if(item.IsIdentity)
-        {
-         @:/// <summary>
-         @:/// Desc:@item.ColumnDescription
-         @:/// Default:@item.DefaultValue
-         @:/// Nullable:@item.IsNullable
-         @:/// </summary>       
-         @:[SqlSugar.SugarColumn(IsIdentity = true)]    
-         @:public @item.DataType @item.DbColumnName {get;set;}
-         }
-         else
-         {
-         @:/// <summary>
-         @:/// Desc:@item.ColumnDescription
-         @:/// Default:@item.DefaultValue
-         @:/// Nullable:@item.IsNullable
-         @:/// </summary>           
-         @:public @item.DataType @item.DbColumnName {get;set;}
-         }
-       }
+    @foreach (var item in @Model.Columns)
+    {
+        @:/// <summary>
+        @:/// Desc:@item.ColumnDescription
+        @:/// Default:@item.DefaultValue
+        @:/// Nullable:@item.IsNullable
+        @:/// </summary>     
+        @:[SqlSugar.SugarColumn(ColumnName = ""@item.DbColumnName"", IsPrimaryKey = @(item.IsPrimarykey?""true"":""false""), IsIdentity = @(item.IsIdentity?""true"":""false""))]      
+        @:public @item.DataType @item.PropertyName { get; set; }
+    }
 
     }
 }";

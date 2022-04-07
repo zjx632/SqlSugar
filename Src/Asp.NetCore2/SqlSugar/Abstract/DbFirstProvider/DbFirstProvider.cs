@@ -114,6 +114,7 @@ namespace SqlSugar
                                 ColumnDescription = it.ColumnDescription,
                                 DataType = it.DataType,
                                 DbColumnName = it.DbColumnName,
+                                PropertyName = it.DbColumnName,
                                 DefaultValue = it.DefaultValue,
                                 IsIdentity = it.IsIdentity,
                                 IsNullable = it.IsNullable,
