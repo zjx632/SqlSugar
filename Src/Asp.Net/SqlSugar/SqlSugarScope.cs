@@ -158,6 +158,10 @@ namespace SqlSugar
         {
             return ScopedContext.GetConnection(configId);
         }
+        public SqlSugarProvider GetConnectionWithAttr<T>()
+        {
+            return ScopedContext.GetConnectionWithAttr<T>();
+        }
 
         public DateTime GetDate()
         {
@@ -400,7 +404,14 @@ namespace SqlSugar
         {
             return ScopedContext.Queryable(joinQueryable1, joinQueryable2, joinQueryable3,joinType1,joinExpression1,joinType2,joinExpression2);
         }
-
+        public ISugarQueryable<T, T2, T3,T4> Queryable<T, T2, T3, T4>(ISugarQueryable<T> joinQueryable1, ISugarQueryable<T2> joinQueryable2, ISugarQueryable<T3> joinQueryable3, ISugarQueryable<T4> joinQueryable4, JoinType joinType1, Expression<Func<T, T2, T3, T4, bool>> joinExpression1, JoinType joinType2, Expression<Func<T, T2, T3, T4, bool>> joinExpression2, JoinType joinType3, Expression<Func<T, T2, T3, T4, bool>> joinExpression3)
+            where T : class, new()
+            where T2 : class, new()
+            where T3 : class, new()
+             where T4 : class, new()
+        {
+            return ScopedContext.Queryable(joinQueryable1, joinQueryable2, joinQueryable3, joinQueryable4, joinType1, joinExpression1, joinType2, joinExpression2, joinType3, joinExpression3);
+        }
         public ISugarQueryable<T> Queryable<T>()
         {
             return ScopedContext.Queryable<T>();
@@ -650,6 +661,16 @@ namespace SqlSugar
         public IFastest<T> Fastest<T>() where T : class, new()
         {
             return ScopedContext.Fastest<T>();
+        }
+
+        public void ThenMapper<T>(IEnumerable<T> list, Action<T> action)
+        {
+            ScopedContext.ThenMapper(list, action);
+        }
+
+        public Task ThenMapperAsync<T>(IEnumerable<T> list, Func<T, Task> action)
+        {
+            return ScopedContext.ThenMapperAsync(list, action);
         }
     }
 }

@@ -319,7 +319,7 @@ namespace SqlSugar
             return methodCallExpressionArgs;
         }
 
-        protected string GetNewExpressionValue(Expression item)
+        public string GetNewExpressionValue(Expression item)
         {
             var newContext = this.Context.GetCopyContextWithMapping();
             newContext.Resolve(item, this.Context.IsJoin ? ResolveExpressType.WhereMultiple : ResolveExpressType.WhereSingle);
@@ -549,6 +549,10 @@ namespace SqlSugar
                 return false;
             }
             else if ((item as MethodCallExpression).Method.Name == "ToBoolean")
+            {
+                return false;
+            }
+            else if ((item as MethodCallExpression).Method.Name == "Select"&& item.ToString().Contains("Subqueryable()"))
             {
                 return false;
             }

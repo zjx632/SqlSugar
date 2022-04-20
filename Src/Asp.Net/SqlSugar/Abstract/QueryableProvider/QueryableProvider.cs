@@ -418,7 +418,8 @@ namespace SqlSugar
                         {
                             ConditionalType = ConditionalType.Equal,
                             FieldName = this.QueryBuilder.Builder.GetTranslationColumnName(column.DbColumnName),
-                            FieldValue = value.ObjToString()
+                            FieldValue = value.ObjToString(),
+                            CSharpTypeName = column.PropertyInfo.PropertyType.Name
                         });
                         if (this.Context.CurrentConnectionConfig.DbType == DbType.PostgreSQL) 
                         {
@@ -483,7 +484,8 @@ namespace SqlSugar
                             {
                                 ConditionalType = ConditionalType.Equal,
                                 FieldName = column.DbColumnName,
-                                FieldValue = value.ObjToString()
+                                FieldValue = value.ObjToString(),
+                                CSharpTypeName=column.PropertyInfo.PropertyType.Name
                             });
                             if (value != null && value.GetType().IsEnum()) 
                             {
@@ -637,7 +639,14 @@ namespace SqlSugar
                 {
                     if (item != null)
                     {
-                        values.Add(item.ToString().ToSqlValue());
+                        if (UtilMethods.IsNumber(item.GetType().Name))
+                        {
+                            values.Add(item.ToString());
+                        }
+                        else
+                        {
+                            values.Add(item.ToString().ToSqlValue());
+                        }
                     }
                 }
                 this.Where(string.Format(QueryBuilder.InTemplate, filed, string.Join(",", values)));
@@ -844,8 +853,22 @@ namespace SqlSugar
             return this.Select("1").ToList().Count() > 0;
         }
 
+        public virtual List<TResult> ToList<TResult>(Expression<Func<T, TResult>> expression)
+        {
+            if (this.QueryBuilder.Includes.Count > 0)
+            {
+                var list = this.ToList().Select(expression.Compile()).ToList();
+                return list;
+            }
+            else 
+            {
+                var list = this.Select(expression).ToList();
+                return list;
+            }
+        }
         public virtual ISugarQueryable<TResult> Select<TResult>(Expression<Func<T, TResult>> expression)
         {
+            Check.ExceptionEasy(this.QueryBuilder.Includes.HasValue(), $"use Includes(...).ToList(it=>new {typeof(TResult).Name} {{...}} )", $"Includes()后面禁使用Select，正确写法: ToList(it=>new {typeof(TResult).Name}{{....}})");
             return _Select<TResult>(expression);
         }
 
@@ -859,7 +882,14 @@ namespace SqlSugar
             }
             else if (this.QueryBuilder.EntityType == UtilConstants.ObjType || (this.QueryBuilder.AsTables != null && this.QueryBuilder.AsTables.Count == 1)||this.QueryBuilder.EntityName!=this.QueryBuilder.EntityType.Name) 
             {
-                return this.Select<TResult>(this.SqlBuilder.SqlSelectAll);
+                if (this.QueryBuilder.SelectValue.HasValue()&& this.QueryBuilder.SelectValue.ObjToString().Contains("AS"))
+                {
+                    return this.Select<TResult>(this.QueryBuilder.SelectValue+"");
+                }
+                else
+                {
+                    return this.Select<TResult>(this.SqlBuilder.SqlSelectAll);
+                }
             }
             else
             {
@@ -1123,16 +1153,28 @@ namespace SqlSugar
             var parentIdName =UtilConvert.ToMemberExpression((parentIdExpression as LambdaExpression).Body).Member.Name;
             var ParentInfo = entity.Columns.First(it => it.PropertyName == parentIdName);
             var parentPropertyName= ParentInfo.DbColumnName;
-            var current = this.Context.Queryable<T>().AS(this.QueryBuilder.GetTableNameString).InSingle(primaryKeyValue);
+            var tableName= this.QueryBuilder.GetTableNameString;
+            if (this.QueryBuilder.IsSingle() == false) 
+            {
+                if (this.QueryBuilder.JoinQueryInfos.Count>0)
+                {
+                    tableName = this.QueryBuilder.JoinQueryInfos.First().TableName;
+                }
+                if (this.QueryBuilder.EasyJoinInfos.Count>0)
+                {
+                    tableName = this.QueryBuilder.JoinQueryInfos.First().TableName;
+                }
+            }
+            var current = this.Context.Queryable<T>().AS(tableName).InSingle(primaryKeyValue);
             if (current != null)
             {
                 result.Add(current);
                 object parentId = ParentInfo.PropertyInfo.GetValue(current,null);
                 int i = 0;
-                while (parentId!=null&&this.Context.Queryable<T>().AS(this.QueryBuilder.GetTableNameString).In(parentId).Any())
+                while (parentId!=null&&this.Context.Queryable<T>().AS(tableName).In(parentId).Any())
                 {
                     Check.Exception(i > 100, ErrorMessage.GetThrowMessage("Dead cycle", "出现死循环或超出循环上限（100），检查最顶层的ParentId是否是null或者0"));
-                    var parent = this.Context.Queryable<T>().AS(this.QueryBuilder.GetTableNameString).InSingle(parentId);
+                    var parent = this.Context.Queryable<T>().AS(tableName).InSingle(parentId);
                     result.Add(parent);
                     parentId= ParentInfo.PropertyInfo.GetValue(parent, null);
                     ++i;
@@ -1148,16 +1190,28 @@ namespace SqlSugar
             var parentIdName = UtilConvert.ToMemberExpression((parentIdExpression as LambdaExpression).Body).Member.Name;
             var ParentInfo = entity.Columns.First(it => it.PropertyName == parentIdName);
             var parentPropertyName = ParentInfo.DbColumnName;
-            var current =await this.Context.Queryable<T>().AS(this.QueryBuilder.GetTableNameString).InSingleAsync(primaryKeyValue);
+            var tableName = this.QueryBuilder.GetTableNameString;
+            if (this.QueryBuilder.IsSingle() == false)
+            {
+                if (this.QueryBuilder.JoinQueryInfos.Count > 0)
+                {
+                    tableName = this.QueryBuilder.JoinQueryInfos.First().TableName;
+                }
+                if (this.QueryBuilder.EasyJoinInfos.Count > 0)
+                {
+                    tableName = this.QueryBuilder.JoinQueryInfos.First().TableName;
+                }
+            }
+            var current =await this.Context.Queryable<T>().AS(tableName).InSingleAsync(primaryKeyValue);
             if (current != null)
             {
                 result.Add(current);
                 object parentId = ParentInfo.PropertyInfo.GetValue(current, null);
                 int i = 0;
-                while (parentId != null &&await this.Context.Queryable<T>().AS(this.QueryBuilder.GetTableNameString).In(parentId).AnyAsync())
+                while (parentId != null &&await this.Context.Queryable<T>().AS(tableName).In(parentId).AnyAsync())
                 {
                     Check.Exception(i > 100, ErrorMessage.GetThrowMessage("Dead cycle", "出现死循环或超出循环上限（100），检查最顶层的ParentId是否是null或者0"));
-                    var parent =await this.Context.Queryable<T>().AS(this.QueryBuilder.GetTableNameString).InSingleAsync(parentId);
+                    var parent =await this.Context.Queryable<T>().AS(tableName).InSingleAsync(parentId);
                     result.Add(parent);
                     parentId = ParentInfo.PropertyInfo.GetValue(parent, null);
                     ++i;
@@ -1276,6 +1330,99 @@ namespace SqlSugar
             InitMapping();
             return _ToList<T>();
         }
+        public List<T> SetContext<ParameterT>(Expression<Func<T, object>> thisFiled, Expression<Func<object>> mappingFiled, ParameterT parameter) 
+        {
+            List<T> result = new List<T>();
+            var entity = this.Context.EntityMaintenance.GetEntityInfo<ParameterT>();
+            var queryableContext = this.Context.TempItems["Queryable_To_Context"] as MapperContext<ParameterT>;
+            var list = queryableContext.list;
+            var pkName = "";
+            if ((mappingFiled as LambdaExpression).Body is UnaryExpression)
+            {
+                pkName = (((mappingFiled as LambdaExpression).Body as UnaryExpression).Operand as MemberExpression).Member.Name;
+            } 
+            else  
+            {
+                pkName = ((mappingFiled as LambdaExpression).Body as MemberExpression).Member.Name;
+            }
+            var key = thisFiled.ToString() +typeof(ParameterT).FullName + typeof(T).FullName;
+            var ids = list.Select(it => it.GetType().GetProperty(pkName).GetValue(it)).ToArray();
+            if (queryableContext.TempChildLists == null)
+                queryableContext.TempChildLists = new Dictionary<string, object>();
+            if (list != null &&  queryableContext.TempChildLists.ContainsKey(key))
+            {
+                result = (List<T>)queryableContext.TempChildLists[key];
+            }
+            else
+            {
+                if (queryableContext.TempChildLists == null)
+                    queryableContext.TempChildLists = new Dictionary<string, object>();
+                this.Context.Utilities.PageEach(ids, 200, pageIds =>
+                {
+                     result.AddRange(this.Clone().In(thisFiled, pageIds).ToList());
+                });
+                queryableContext.TempChildLists[key]= result;
+            }
+            var name = "";
+            if((thisFiled as LambdaExpression).Body is UnaryExpression) 
+            {
+                name = (((thisFiled as LambdaExpression).Body as UnaryExpression).Operand as MemberExpression).Member.Name;
+            }
+            else
+            {
+                name = ((thisFiled as LambdaExpression).Body as MemberExpression).Member.Name;
+            }
+            var pkValue = parameter.GetType().GetProperty(pkName).GetValue(parameter);
+            result = result.Where(it => it.GetType().GetProperty(name).GetValue(it).ObjToString() == pkValue.ObjToString()).ToList();
+            return result;
+        }
+
+        public async Task<List<T>> SetContextAsync<ParameterT>(Expression<Func<T, object>> thisFiled, Expression<Func<object>> mappingFiled, ParameterT parameter)
+        {
+            List<T> result = new List<T>();
+            var entity = this.Context.EntityMaintenance.GetEntityInfo<ParameterT>();
+            var queryableContext = this.Context.TempItems["Queryable_To_Context"] as MapperContext<ParameterT>;
+            var list = queryableContext.list;
+            var pkName = "";
+            if ((mappingFiled as LambdaExpression).Body is UnaryExpression)
+            {
+                pkName = (((mappingFiled as LambdaExpression).Body as UnaryExpression).Operand as MemberExpression).Member.Name;
+            }
+            else
+            {
+                pkName = ((mappingFiled as LambdaExpression).Body as MemberExpression).Member.Name;
+            }
+            var key = thisFiled.ToString() + typeof(ParameterT).FullName + typeof(T).FullName;
+            var ids = list.Select(it => it.GetType().GetProperty(pkName).GetValue(it)).ToArray();
+            if (queryableContext.TempChildLists == null)
+                queryableContext.TempChildLists = new Dictionary<string, object>();
+            if (list != null && queryableContext.TempChildLists.ContainsKey(key))
+            {
+                result = (List<T>)queryableContext.TempChildLists[key];
+            }
+            else
+            {
+                if (queryableContext.TempChildLists == null)
+                    queryableContext.TempChildLists = new Dictionary<string, object>();
+                await this.Context.Utilities.PageEachAsync(ids, 200, async pageIds =>
+                {
+                    result.AddRange(await this.Clone().In(thisFiled, pageIds).ToListAsync());
+                });
+                queryableContext.TempChildLists[key] = result;
+            }
+            var name = "";
+            if ((thisFiled as LambdaExpression).Body is UnaryExpression)
+            {
+                name = (((thisFiled as LambdaExpression).Body as UnaryExpression).Operand as MemberExpression).Member.Name;
+            }
+            else
+            {
+                name = ((thisFiled as LambdaExpression).Body as MemberExpression).Member.Name;
+            }
+            var pkValue = parameter.GetType().GetProperty(pkName).GetValue(parameter);
+            result = result.Where(it => it.GetType().GetProperty(name).GetValue(it).ObjToString() == pkValue.ObjToString()).ToList();
+            return result;
+        }
         public virtual void ForEach(Action<T> action, int singleMaxReads = 300,System.Threading.CancellationTokenSource cancellationTokenSource = null) 
         {
             Check.Exception(this.QueryBuilder.Skip > 0 || this.QueryBuilder.Take > 0, ErrorMessage.GetThrowMessage("no support Skip take, use PageForEach", "不支持Skip Take,请使用 Queryale.PageForEach"));
@@ -1289,6 +1436,26 @@ namespace SqlSugar
                     totalPage==1?
                     queryable.ToPageList(i, singleMaxReads, ref totalNumber, ref totalPage):
                     queryable.ToPageList(i, singleMaxReads);
+                foreach (var item in page)
+                {
+                    if (cancellationTokenSource?.IsCancellationRequested == true) return;
+                    action.Invoke(item);
+                }
+            }
+        }
+        public virtual async Task ForEachAsync(Action<T> action, int singleMaxReads = 300, System.Threading.CancellationTokenSource cancellationTokenSource = null)
+        {
+            Check.Exception(this.QueryBuilder.Skip > 0 || this.QueryBuilder.Take > 0, ErrorMessage.GetThrowMessage("no support Skip take, use PageForEach", "不支持Skip Take,请使用 Queryale.PageForEach"));
+            RefAsync<int> totalNumber = 0;
+            RefAsync<int> totalPage = 1;
+            for (int i = 1; i <= totalPage; i++)
+            {
+                if (cancellationTokenSource?.IsCancellationRequested == true) return;
+                var queryable = this.Clone();
+                var page =
+                    totalPage == 1 ?
+                    await  queryable.ToPageListAsync(i, singleMaxReads,  totalNumber,  totalPage) :
+                    await queryable.ToPageListAsync(i, singleMaxReads);
                 foreach (var item in page)
                 {
                     if (cancellationTokenSource?.IsCancellationRequested == true) return;
@@ -1312,6 +1479,43 @@ namespace SqlSugar
                         if (cancellationTokenSource?.IsCancellationRequested == true) return;
                         if (number + singleMaxReads > pageSize) singleMaxReads = NowCount;
                         foreach (var item in this.Clone().Skip(Skip).Take(singleMaxReads).ToList())
+                        {
+                            if (cancellationTokenSource?.IsCancellationRequested == true) return;
+                            action.Invoke(item);
+                        }
+                        NowCount -= singleMaxReads;
+                        Skip += singleMaxReads;
+                        number += singleMaxReads;
+                    }
+                }
+                else
+                {
+                    if (cancellationTokenSource?.IsCancellationRequested == true) return;
+                    foreach (var item in this.Clone().ToPageList(pageIndex, pageSize))
+                    {
+                        if (cancellationTokenSource?.IsCancellationRequested == true) return;
+                        action.Invoke(item);
+                    }
+                }
+            }
+            totalNumber = count;
+        }
+        public virtual async Task ForEachByPageAsync(Action<T> action, int pageIndex, int pageSize,RefAsync<int> totalNumber, int singleMaxReads = 300, System.Threading.CancellationTokenSource cancellationTokenSource = null)
+        {
+            int count = this.Clone().Count();
+            if (count > 0)
+            {
+                if (pageSize > singleMaxReads && count - ((pageIndex - 1) * pageSize) > singleMaxReads)
+                {
+                    Int32 Skip = (pageIndex - 1) * pageSize;
+                    Int32 NowCount = count - Skip;
+                    Int32 number = 0;
+                    if (NowCount > pageSize) NowCount = pageSize;
+                    while (NowCount > 0)
+                    {
+                        if (cancellationTokenSource?.IsCancellationRequested == true) return;
+                        if (number + singleMaxReads > pageSize) singleMaxReads = NowCount;
+                        foreach (var item in await this.Clone().Skip(Skip).Take(singleMaxReads).ToListAsync())
                         {
                             if (cancellationTokenSource?.IsCancellationRequested == true) return;
                             action.Invoke(item);
@@ -1645,6 +1849,12 @@ namespace SqlSugar
             this.Context.MappingTables = oldMapping;
             return await this.Clone().ToPageListAsync(pageIndex, pageSize);
         }
+        public Task<List<T>> ToPageListAsync(int pageNumber, int pageSize, RefAsync<int> totalNumber, RefAsync<int> totalPage) 
+        {
+            var result = ToPageListAsync(pageNumber, pageSize, totalNumber);
+            totalPage = (totalNumber + pageSize - 1) / pageSize;
+            return result;
+        }
         public async Task<string> ToJsonAsync()
         {
             if (IsCache)
@@ -1887,7 +2097,28 @@ namespace SqlSugar
         {
             QueryBuilder.CheckExpression(expression, "OrderBy");
             var isSingle = QueryBuilder.IsSingle();
-            if ((expression as LambdaExpression).Body is NewExpression)
+            if (expression.ToString().IsContainsIn("Desc(", "Asc("))
+            {
+                var orderValue = "";
+                var newExp = (expression as LambdaExpression).Body as NewExpression;
+                foreach (var item in newExp.Arguments)
+                {
+                    if (item is MemberExpression)
+                    {
+                        orderValue +=
+                          QueryBuilder.GetExpressionValue(item, isSingle ? ResolveExpressType.FieldSingle : ResolveExpressType.FieldMultiple).GetResultString() + ",";
+                    }
+                    else
+                    {
+                        orderValue +=
+                            QueryBuilder.GetExpressionValue(item, isSingle ? ResolveExpressType.WhereSingle : ResolveExpressType.WhereMultiple).GetResultString() + ",";
+                    }
+                }
+                orderValue = orderValue.TrimEnd(',');
+                OrderBy(orderValue);
+                return this;
+            }
+            else if ((expression as LambdaExpression).Body is NewExpression)
             {
                 var lamResult = QueryBuilder.GetExpressionValue(expression, isSingle ? ResolveExpressType.ArraySingle : ResolveExpressType.ArrayMultiple);
                 var items = lamResult.GetResultString().Split(',').Where(it => it.HasValue()).Select(it => it + UtilConstants.Space + type.ToString().ToUpper()).ToList();
@@ -2094,8 +2325,28 @@ namespace SqlSugar
             }
             RestoreMapping();
             _Mapper(result);
+            _InitNavigat(result);
             return result;
         }
+
+        private void _InitNavigat<TResult>(List<TResult> result)
+        {
+            if (this.QueryBuilder.Includes != null) 
+            {
+                var managers=(this.QueryBuilder.Includes  as List<object>);
+                if (this.QueryBuilder.SelectValue.HasValue()) 
+                {
+                    Check.ExceptionEasy("To use includes, use select after tolist()", "使用Includes请在ToList()之后在使用Select");
+                }
+                foreach (var it in managers)
+                {
+                    var manager = it as NavigatManager<TResult>;
+                    manager.RootList = result;
+                    manager.Execute();
+                }
+            }
+        }
+
         protected async Task<List<TResult>> _ToListAsync<TResult>()
         {
             List<TResult> result = null;
@@ -2111,6 +2362,7 @@ namespace SqlSugar
             }
             RestoreMapping();
             _Mapper(result);
+            await Task.Run(() => { _InitNavigat(result); });
             return result;
         }
 
@@ -2254,7 +2506,8 @@ namespace SqlSugar
                       {
                            FieldName=this.SqlBuilder.GetTranslationColumnName(whereCol.DbColumnName),
                            ConditionalType= ConditionalType.In,
-                           FieldValue=string.Join(",",inValues.Distinct())
+                           FieldValue=string.Join(",",inValues.Distinct()),
+                           CSharpTypeName=whereCol.PropertyInfo.PropertyType.Name
                       }
                     };
                     var list = this.Context.Queryable<TObject>().Where(wheres).ToList();
@@ -2686,6 +2939,7 @@ namespace SqlSugar
                        _Size=it._Size
                 }).ToList();
             }
+            asyncQueryableBuilder.Includes = this.QueryBuilder.Includes;
             asyncQueryableBuilder.Take = this.QueryBuilder.Take;
             asyncQueryableBuilder.Skip = this.QueryBuilder.Skip;
             asyncQueryableBuilder.SelectValue = this.QueryBuilder.SelectValue;

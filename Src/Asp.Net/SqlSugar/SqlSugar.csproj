@@ -94,14 +94,24 @@
     <Compile Include="Abstract\FastestProvider\Setting.cs" />
     <Compile Include="Abstract\FastestProvider\SplitFastest.cs" />
     <Compile Include="Abstract\FilterProvider\FilterProvider.cs" />
+    <Compile Include="Abstract\QueryableProvider\IncludesHelper.cs" />
+    <Compile Include="Abstract\QueryableProvider\Includes.cs" />
+    <Compile Include="Abstract\QueryableProvider\NavigatManager.cs" />
     <Compile Include="Abstract\SaveableProvider\StorageableDataTable.cs" />
     <Compile Include="Abstract\SugarProvider\SqlSugarCoreProvider.cs" />
+    <Compile Include="Entities\SugarAbMapping.cs" />
     <Compile Include="Entities\JoinMapper.cs" />
+    <Compile Include="Enum\NavigatType.cs" />
     <Compile Include="Enum\SugarActionType.cs" />
     <Compile Include="Entities\SugarConnection.cs" />
+    <Compile Include="ExpressionsToSql\Common\ExpressionOutParameter.cs" />
+    <Compile Include="ExpressionsToSql\ResolveItems\NavgateExpressionCall.cs" />
+    <Compile Include="ExpressionsToSql\ResolveItems\NavgateExpression.cs" />
     <Compile Include="ExpressionsToSql\Subquery\SubTemplate.cs" />
     <Compile Include="ExpressionsToSql\Subquery\SubqueryableN.cs" />
+    <Compile Include="Abstract\QueryableProvider\QueryableContext.cs" />
     <Compile Include="Infrastructure\StaticConfig.cs" />
+    <Compile Include="Interface\IIncludes.cs" />
     <Compile Include="Interface\IFastBuilder.cs" />
     <Compile Include="Interface\IFastest.cs" />
     <Compile Include="OnlyNet\OracleFastBuilder.cs" />
@@ -244,6 +254,7 @@
     <Compile Include="SqlSugarClient.cs" />
     <Compile Include="Utilities\CallContext.cs" />
     <Compile Include="Utilities\CallContextAsync.cs" />
+    <Compile Include="Utilities\CommonExtensions.cs" />
     <Compile Include="Utilities\PropertyCallAdapterProvider.cs" />
     <Compile Include="Utilities\SugarRetry.cs" />
     <Compile Include="Utilities\DataTableExtensions.cs" />
@@ -398,6 +409,8 @@
     <Compile Include="Abstract\SugarProvider\SqlSugarProvider.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Abstract\QueryableProvider\Includes.txt" />
+    <Content Include="Interface\IIncludes.txt" />
     <Content Include="References\DmProvider.dll" />
     <Content Include="References\Kdbndp.dll" />
     <Content Include="References\Newtonsoft.Json.dll" />
@@ -409,6 +422,27 @@
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="SqlSugar.nuspec" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Abstract\AdoProvider\Abstract\AdoProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\AopProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\CacheProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\CodeFirstProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\DbBindProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\DbFirstProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\DbMaintenanceProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\DeleteProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\EntityMaintenance\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\ExpressionableProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\FastestProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\FilterProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\InsertableProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\QueryableProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\Reportable\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\SaveableProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\SqlBuilderProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\SugarProvider\" />
+    <Folder Include="Abstract\AdoProvider\Abstract\UpdateProvider\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

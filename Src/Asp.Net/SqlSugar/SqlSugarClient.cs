@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,8 @@ namespace SqlSugar
         private MappingColumnList _MappingColumns;
         private IgnoreColumnList _IgnoreColumns;
         private IgnoreColumnList _IgnoreInsertColumns;
+
+
         internal Guid? AsyncId { get; set; }
         internal bool? IsSingleInstance { get; set; }
 
@@ -321,7 +324,17 @@ namespace SqlSugar
         {
             return this.Context.Queryable(joinQueryable1, joinQueryable2, joinQueryable3, joinType1, joinExpression1, joinType2, joinExpression2).With(SqlWith.Null);
         }
-
+        public ISugarQueryable<T, T2, T3,T4> Queryable<T, T2, T3, T4>(ISugarQueryable<T> joinQueryable1, ISugarQueryable<T2> joinQueryable2, ISugarQueryable<T3> joinQueryable3, ISugarQueryable<T4> joinQueryable4,
+          JoinType joinType1, Expression<Func<T, T2, T3,T4, bool>> joinExpression1,
+          JoinType joinType2, Expression<Func<T, T2, T3, T4, bool>> joinExpression2,
+          JoinType joinType3, Expression<Func<T, T2, T3, T4, bool>> joinExpression3)
+    where T : class, new()
+    where T2 : class, new()
+    where T3 : class, new()
+    where T4 : class ,new ()
+        {
+            return this.Context.Queryable(joinQueryable1, joinQueryable2, joinQueryable3, joinQueryable4, joinType1, joinExpression1, joinType2, joinExpression2,joinType3, joinExpression3).With(SqlWith.Null);
+        }
 
         public ISugarQueryable<T> Queryable<T>()
         {
@@ -580,6 +593,17 @@ namespace SqlSugar
         }
         #endregion
 
+        #region ThenMapper
+        public void ThenMapper<T>(IEnumerable<T> list, Action<T> action)
+        {
+            this.Context.ThenMapper(list, action);
+        }
+        public  Task ThenMapperAsync<T>(IEnumerable<T> list, Func<T, Task> action)
+        {
+            return this.Context.ThenMapperAsync(list,action);
+        }
+        #endregion
+
         #region More api
         public IContextMethods Utilities { get { return this.Context.Utilities; } set { this.Context.Utilities = value; } }
         public AopProvider Aop => this.Context.Aop;
@@ -622,6 +646,14 @@ namespace SqlSugar
                     Context = provider
                 });
             }
+        }
+        public SqlSugarProvider GetConnectionWithAttr<T>() 
+        {
+            var attr = typeof(T).GetCustomAttribute<TenantAttribute>();
+            if (attr == null)
+                return this.GetConnection(this.CurrentConnectionConfig.ConfigId);
+            var configId = attr.configId;
+            return this.GetConnection(configId);
         }
         public SqlSugarProvider GetConnection(dynamic configId)
         {

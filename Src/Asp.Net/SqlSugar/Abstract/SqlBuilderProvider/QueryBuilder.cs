@@ -33,6 +33,7 @@ namespace SqlSugar
         #endregion
 
         #region Splicing basic
+        public List<object> Includes { get; set; }
         public List<string> IgnoreColumns { get; set; }
         public bool IsCount { get; set; }
         public bool IsSqlQuery { get; set; }
@@ -241,6 +242,7 @@ namespace SqlSugar
             {
                 resolveExpress.PgSqlIsAutoToLower = true;
             }
+            resolveExpress.SugarContext = new ExpressionOutParameter() { Context = this.Context  };
             resolveExpress.RootExpression = expression;
             resolveExpress.JoinQueryInfos = Builder.QueryBuilder.JoinQueryInfos;
             resolveExpress.IsSingle = IsSingle()&& resolveType!= ResolveExpressType.WhereMultiple;
@@ -263,7 +265,7 @@ namespace SqlSugar
             if (isSingleTableHasSubquery)
             {
                 Check.Exception(!string.IsNullOrEmpty(this.TableShortName) && resolveExpress.SingleTableNameSubqueryShortName != this.TableShortName, "{0} and {1} need same name", resolveExpress.SingleTableNameSubqueryShortName, this.TableShortName);
-                this.TableShortName = resolveExpress.SingleTableNameSubqueryShortName;
+                this.TableShortName =resolveExpress.SingleTableNameSubqueryShortName;
             }
             return result;
         }
@@ -652,7 +654,7 @@ namespace SqlSugar
                     result = result.Replace(" ) unionTable  ", ") "+TableShortName + UtilConstants.Space);
                     TableShortName = null;
                 }
-                if (this.TableShortName.HasValue())
+                if (this.TableShortName.HasValue()&&!IsSqlQuery)
                 {
                     result += (TableShortName + UtilConstants.Space);
                 }

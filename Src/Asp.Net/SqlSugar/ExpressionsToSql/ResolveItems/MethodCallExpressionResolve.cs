@@ -244,6 +244,15 @@ namespace SqlSugar
         {
             try
             {
+                 OneToManyNavgateExpression nav=new OneToManyNavgateExpression(this.Context?.SugarContext?.Context,this);
+                 if (nav.IsNavgate(express)) 
+                 {
+                    var sql = nav.GetSql();
+                    this.Context.SingleTableNameSubqueryShortName = nav.ShorName;
+                    base.AppendValue(parameter, isLeft, sql);
+                    return;
+                 }
+
                 var constValue = ExpressionTool.DynamicInvoke(express);
                 if (constValue is MapperSql)
                 {
@@ -547,6 +556,14 @@ namespace SqlSugar
             {
                 parameter.CommonTempData = DateTime.Now.Date;
             }
+            else if (item is ConditionalExpression)
+            {
+                parameter.CommonTempData = GetNewExpressionValue(item);
+            }
+            else if (IsNot(item))
+            {
+                parameter.CommonTempData = GetNewExpressionValue(item);
+            }
             else if (IsDateDate(item))
             {
                 parameter.CommonTempData = GetNewExpressionValue(item);
@@ -572,6 +589,10 @@ namespace SqlSugar
                 IsMember = parameter.ChildExpression is MemberExpression && !ExpressionTool.IsConstExpression(parameter.ChildExpression as MemberExpression),
                 MemberName = parameter.CommonTempData
             };
+            if(methodCallExpressionArgs.MemberName is MapperSql) 
+            {
+                methodCallExpressionArgs.MemberName = (methodCallExpressionArgs.MemberName as MapperSql).Sql;
+            }
             if (methodCallExpressionArgs.IsMember && parameter.ChildExpression != null && parameter.ChildExpression.ToString() == "DateTime.Now")
             {
                 methodCallExpressionArgs.IsMember = false;
@@ -585,7 +606,7 @@ namespace SqlSugar
                     methodCallExpressionArgs.IsMember = false;
                 }
             }
-            if (IsDateDate(item) || IsDateValue(item)|| IsDateItemValue(item))
+            if (IsDateDate(item) || IsDateValue(item) || IsDateItemValue(item) || item is ConditionalExpression||IsNot(item))
             {
                 methodCallExpressionArgs.IsMember = true;
             }
@@ -606,6 +627,11 @@ namespace SqlSugar
             }
             model.Args.Add(methodCallExpressionArgs);
             parameter.ChildExpression = null;
+        }
+
+        private static bool IsNot(Expression item)
+        {
+            return item is UnaryExpression && (item as UnaryExpression).NodeType == ExpressionType.Not;
         }
 
         private bool IsDateItemValue(Expression item)
@@ -897,6 +923,10 @@ namespace SqlSugar
                         return this.Context.DbMehtods.LessThan(model);
                     case "LessThanOrEqual":
                         return this.Context.DbMehtods.LessThanOrEqual(model);
+                    case "Asc":
+                        return this.Context.DbMehtods.Asc(model);
+                    case "Desc":
+                        return this.Context.DbMehtods.Desc(model);
                     default:
                         break;
                 }
@@ -963,7 +993,11 @@ namespace SqlSugar
 
         public string GeDateFormat(string formatString, string value)
         {
-            if (IsOracle() || IsPg())
+            if (IsOracle() && formatString == "yyyy-MM-dd HH:mm:ss")
+            {
+                return $"to_char({value},'yyyy-MM-dd HH:mi:ss') ";
+            }
+            else if (IsOracle() || IsPg())
             {
                 return $"to_char({value},'{formatString}') ";
             }
@@ -1038,6 +1072,14 @@ namespace SqlSugar
             else if (formatString == "yyyy-MM-dd hh:mm:ss" && IsSqlServer())
             {
                 return $"CONVERT(varchar(100),convert(datetime,{value}), 120)";
+            }
+            else if (formatString == "yyyy-MM-dd HH:mm" && IsSqlServer())
+            {
+                return $"CONVERT(varchar(16),convert(datetime,{value}), 120)";
+            }
+            else if (formatString == "yyyy-MM-dd hh:mm" && IsSqlServer())
+            {
+                return $"CONVERT(varchar(16),convert(datetime,{value}), 120)";
             }
             else if (formatString == "yyyy-MM-dd hh:mm:ss.ms" && IsSqlServer())
             {

@@ -220,6 +220,27 @@ namespace SqlSugar
             this.Context.InitMappingInfo<T>();
             return this.TruncateTable(this.Context.EntityMaintenance.GetEntityInfo<T>().DbTableName);
         }
+        public virtual bool TruncateTable<T,T2>()
+        {
+            TruncateTable<T>();
+            TruncateTable<T2>();
+            return true;
+        }
+        public virtual bool TruncateTable<T, T2,T3>()
+        {
+            TruncateTable<T>();
+            TruncateTable<T2>();
+            TruncateTable<T3>();
+            return true;
+        }
+        public virtual bool TruncateTable<T, T2, T3,T4>()
+        {
+            TruncateTable<T>();
+            TruncateTable<T2>();
+            TruncateTable<T3>();
+            TruncateTable<T4>();
+            return true;
+        }
         public virtual bool DropColumn(string tableName, string columnName)
         {
             columnName = this.SqlBuilder.GetTranslationColumnName(columnName);
@@ -315,13 +336,21 @@ namespace SqlSugar
         }
         public virtual bool CreateIndex(string tableName, string[] columnNames, bool isUnique=false)
         {
-            string sql = string.Format(CreateIndexSql,tableName,string.Join(",",columnNames), string.Join("_", columnNames) + this.Context.CurrentConnectionConfig.IndexSuffix, isUnique ? "UNIQUE" : "");
+            string sql = string.Format(CreateIndexSql,this.SqlBuilder.GetTranslationTableName(tableName),string.Join(",",columnNames.Select(it=>this.SqlBuilder.GetTranslationColumnName(it))), string.Join("_", columnNames) + this.Context.CurrentConnectionConfig.IndexSuffix, isUnique ? "UNIQUE" : "");
+            sql = sql.Replace("_" + this.SqlBuilder.SqlTranslationLeft, "_");
+            sql = sql.Replace(  this.SqlBuilder.SqlTranslationRight+"_", "_");
+            sql = sql.Replace(this.SqlBuilder.SqlTranslationLeft+ this.SqlBuilder.SqlTranslationLeft, this.SqlBuilder.SqlTranslationLeft);
+            sql = sql.Replace(this.SqlBuilder.SqlTranslationRight + this.SqlBuilder.SqlTranslationRight, this.SqlBuilder.SqlTranslationRight);
             this.Context.Ado.ExecuteCommand(sql);
             return true;
         }
         public virtual bool CreateUniqueIndex(string tableName, string[] columnNames)
         {
-            string sql = string.Format(CreateIndexSql, tableName, string.Join(",", columnNames), string.Join("_", columnNames) + this.Context.CurrentConnectionConfig.IndexSuffix + "_Unique","UNIQUE" );
+            string sql = string.Format(CreateIndexSql, this.SqlBuilder.GetTranslationTableName(tableName), string.Join(",", columnNames.Select(it => this.SqlBuilder.GetTranslationColumnName(it))), string.Join("_", columnNames) + this.Context.CurrentConnectionConfig.IndexSuffix + "_Unique","UNIQUE" );
+            sql = sql.Replace("_" + this.SqlBuilder.SqlTranslationLeft, "_");
+            sql = sql.Replace(this.SqlBuilder.SqlTranslationRight + "_", "_");
+            sql = sql.Replace(this.SqlBuilder.SqlTranslationLeft + this.SqlBuilder.SqlTranslationLeft, this.SqlBuilder.SqlTranslationLeft);
+            sql = sql.Replace(this.SqlBuilder.SqlTranslationRight + this.SqlBuilder.SqlTranslationRight, this.SqlBuilder.SqlTranslationRight);
             this.Context.Ado.ExecuteCommand(sql);
             return true;
         }
