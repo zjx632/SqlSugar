@@ -21,7 +21,7 @@ namespace SqlSugar
             {
                 return "char";
             }
-            if (dbTypeName == "byte[]")
+            if (dbTypeName == "byte[]" || dbTypeName == "bytea")
             {
                 return "byte[]";
             }
